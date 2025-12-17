@@ -36,3 +36,28 @@ ENV PYTHONPATH=/app
 
 # run tests
 RUN pytest
+
+
+# ==========================================
+# ETAP 3: FINAL
+# ==========================================
+FROM python:3.10-slim
+
+WORKDIR /app
+
+# copy python libs from BUILDER step
+COPY --from=builder /usr/local/lib/python3.10/site-packages /usr/local/lib/python3.10/site-packages
+COPY --from=builder /usr/local/bin /usr/local/bin
+
+# copy app code from BUILDER step
+COPY --from=builder /app/src ./src
+
+# env
+ENV PYTHONPATH=/app
+ENV FLASK_APP=src/app.py
+
+# create non-root user
+RUN useradd -m appuser
+USER appuser
+
+CMD ["python", "src/app.py"]
