@@ -60,13 +60,7 @@ services:
     depends_on:
       db:
         condition: service_started
-    command: >
-      python -c "import time; 
-      from src.app import create_app, db; 
-      app = create_app(); 
-      print('Czekam na start bazy...'); 
-      time.sleep(5);
-      with app.app_context(): db.create_all(); print('Migracje zakończone sukcesem.')"
+    command: python src/migrate.py
   seed_runner:
     build:
       context: .

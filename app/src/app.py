@@ -1,31 +1,27 @@
 import os
 from flask import Flask, jsonify, request
-from models import db, User
+from src.models import db, User
 
 def create_app(config_name='default'):
     app = Flask(__name__)
 
-    # Konfiguracja bazy danych z Env Vars (domyślne wartości dla bezpieczeństwa)
     db_user = os.getenv('POSTGRES_USER', 'user')
     db_password = os.getenv('POSTGRES_PASSWORD', 'password')
     db_host = os.getenv('POSTGRES_HOST', 'localhost')
     db_name = os.getenv('POSTGRES_DB', 'flaskdb')
 
-    # Connection String dla PostgreSQL
-    app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql://{db_user}:{db_password}@{db_host}/{db_name}'
+    app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql://{db_user}:{db_password}@{db_host}:5432/{db_name}'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
     db.init_app(app)
 
-    # Tworzenie tabel (w środowisku produkcyjnym użyjemy migracji, tutaj dla uproszczenia startu)
-    with app.app_context():
-        db.create_all()
-
-    # --- ENDPOINTS ---
+    @app.route('/', methods=['GET'])
+    def index():
+        return "Hello from Flask!"
 
     @app.route('/health', methods=['GET'])
     def health_check():
-        """Endpoint do sprawdzania stanu aplikacji (Healthcheck)"""
+        """Endpoint do sprawdzania stanu aplikacji"""
         return jsonify({"status": "ok", "service": "flask-app"}), 200
 
     @app.route('/users', methods=['POST'])
@@ -42,11 +38,12 @@ def create_app(config_name='default'):
             return jsonify(new_user.to_dict()), 201
         except Exception as e:
             db.session.rollback()
+            print(f"Error creating user: {e}") 
             return jsonify({"error": str(e)}), 500
 
     @app.route('/users', methods=['GET'])
     def get_users():
-        """Pobieranie użytkowników (Test odczytu DB)"""
+        """Pobieranie użytkowników"""
         users = User.query.all()
         return jsonify([u.to_dict() for u in users]), 200
 

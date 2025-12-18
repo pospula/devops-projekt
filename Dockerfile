@@ -17,13 +17,13 @@ RUN apt-get update && apt-get upgrade -y && \
     && rm -rf /var/lib/apt/lists/*
 
 # python reqs
-COPY requirements.txt .
+COPY app/requirements.txt .
 RUN pip install --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
 # copy code
-COPY src/ ./src
-COPY tests/ ./tests
+COPY app/src/ ./src
+COPY app/tests/ ./tests
 
 
 # ==========================================
@@ -41,7 +41,7 @@ RUN pytest
 # ==========================================
 # ETAP 3: FINAL
 # ==========================================
-FROM python:3.10-slim
+FROM python:3.10-slim AS final
 
 WORKDIR /app
 
@@ -58,6 +58,9 @@ ENV FLASK_APP=src/app.py
 
 # create non-root user
 RUN useradd -m appuser
+
+RUN mkdir -p /app/seed_output && chown -R appuser:appuser /app
+
 USER appuser
 
 CMD ["python", "src/app.py"]

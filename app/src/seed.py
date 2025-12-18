@@ -3,8 +3,8 @@ import json
 import csv
 import logging
 import time
-from src.app import create_app, db
-from src.models import User
+from src.app import create_app
+from src.models import db, User
 
 OUTPUT_DIR = '/app/seed_output'
 LOG_FILE = os.path.join(OUTPUT_DIR, 'seed.log')
