@@ -2,16 +2,19 @@ import os
 from flask import Flask, jsonify, request
 from src.models import db, User
 
-def create_app(config_name='default'):
+def create_app(test_config=None):
     app = Flask(__name__)
 
-    db_user = os.getenv('POSTGRES_USER', 'user')
-    db_password = os.getenv('POSTGRES_PASSWORD', 'password')
-    db_host = os.getenv('POSTGRES_HOST', 'localhost')
-    db_name = os.getenv('POSTGRES_DB', 'flaskdb')
+    if test_config:
+        app.config.update(test_config)
+    else:
+        db_user = os.getenv('POSTGRES_USER', 'user')
+        db_password = os.getenv('POSTGRES_PASSWORD', 'password')
+        db_host = os.getenv('POSTGRES_HOST', 'localhost')
+        db_name = os.getenv('POSTGRES_DB', 'flaskdb')
 
-    app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql://{db_user}:{db_password}@{db_host}:5432/{db_name}'
-    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+        app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql://{db_user}:{db_password}@{db_host}:5432/{db_name}'
+        app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
     db.init_app(app)
 

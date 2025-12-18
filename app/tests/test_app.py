@@ -5,9 +5,11 @@ from src.models import db, User
 @pytest.fixture
 def client():
     # konfiguracja aplikacji pod testy (używam SQLite w pamięci dla izolacji)
-    app = create_app()
-    app.config['TESTING'] = True
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
+    app = create_app({
+        'TESTING': True,
+        'SQLALCHEMY_DATABASE_URI': 'sqlite:///:memory:',
+        'SQLALCHEMY_TRACK_MODIFICATIONS': False
+    })
     
     with app.app_context():
         db.create_all()
