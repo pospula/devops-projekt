@@ -1,6 +1,6 @@
 import pytest
 from src.app import create_app
-from src.models import db
+from src.models import db, User
 
 @pytest.fixture
 def client():
@@ -16,13 +16,13 @@ def client():
         db.drop_all()
 
 def test_health_check(client):
-    """1. Test endpointu /health"""
+    """Test endpointu /health"""
     response = client.get('/health')
     assert response.status_code == 200
     assert response.json['status'] == 'ok'
 
 def test_create_user(client):
-    """2. Test dodawania użytkownika"""
+    """Test dodawania użytkownika"""
     response = client.post('/users', json={
         'username': 'testuser',
         'email': 'test@example.com'
@@ -38,3 +38,12 @@ def test_get_users(client):
     assert response.status_code == 200
     assert len(response.json) == 1
     assert response.json[0]['username'] == 'user1'
+
+def test_user_model_unit():
+    """Testuje metodę to_dict() modelu User w izolacji (bez bazy danych)"""
+    user = User(username='unit_test', email='unit@test.com')
+    
+    result = user.to_dict()
+    
+    assert result['username'] == 'unit_test'
+    assert result['email'] == 'unit@test.com'
