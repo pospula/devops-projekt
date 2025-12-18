@@ -44,6 +44,29 @@ services:
       - db_data:/var/lib/postgresql/data
     networks:
       - back_net
+  migration_runner:
+    build:
+      context: .
+      target: final
+    container_name: migration_runner
+    restart: "no"
+    environment:
+      - POSTGRES_HOST=db
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=flaskdb
+    networks:
+      - back_net
+    depends_on:
+      db:
+        condition: service_started
+    command: >
+      python -c "import time; 
+      from src.app import create_app, db; 
+      app = create_app(); 
+      print('Czekam na start bazy...'); 
+      time.sleep(5);
+      with app.app_context(): db.create_all(); print('Migracje zakończone sukcesem.')"
 
 networks:
   front_net:
