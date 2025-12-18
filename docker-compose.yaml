@@ -67,7 +67,25 @@ services:
       print('Czekam na start bazy...'); 
       time.sleep(5);
       with app.app_context(): db.create_all(); print('Migracje zakończone sukcesem.')"
-
+  seed_runner:
+    build:
+      context: .
+      target: final
+    container_name: seed_runner
+    restart: "no"
+    environment:
+      - POSTGRES_HOST=db
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=flaskdb
+    volumes:
+      - seed_output:/app/seed_output
+    networks:
+      - back_net
+    depends_on:
+      migration_runner:
+        condition: service_completed_successfully
+    command: python src/seed.py
 networks:
   front_net:
   back_net:
@@ -75,3 +93,4 @@ networks:
 volumes:
   nginx_logs:
   db_data:
+  seed_output:
