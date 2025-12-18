@@ -1,0 +1,69 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: "main"
+  pull_request:
+    branches: "main"
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build-and-deploy:
+    name: build, test and push to GHCR
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      security-events: write
+
+    steps:
+      - name: checkout code
+        uses: actions/checkout@v4
+
+      - name: login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: build and run tests
+        run: |
+          docker build --target tester -t test-image .
+
+      - name: build final image
+        run: |
+          docker build --target final -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }} .
+          docker tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }} ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+
+      - name: push to GHCR
+        if: github.event_name != 'pull_request'
+        run: |
+          docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+
+  security-scan:
+    name: CodeQL scan
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+
+    steps:
+      - name: checkout code
+        uses: actions/checkout@v4
+
+      - name: init CodeQL
+        uses: github/codeql-action/init@v2
+        with:
+          languages: python
+
+      - name: autobuild
+        uses: github/codeql-action/autobuild@v2
+
+      - name: CodeQL analysis
+        uses: github/codeql-action/analyze@v2
