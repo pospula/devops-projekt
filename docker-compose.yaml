@@ -88,7 +88,9 @@ services:
     command: python src/seed.py
 networks:
   front_net:
+    driver: bridge
   back_net:
+    driver: bridge
 
 volumes:
   nginx_logs:
