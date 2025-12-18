@@ -1,0 +1,52 @@
+name: CD Pipeline
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  deploy:
+    name: Deploy to Server
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Copy configs to server
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_KEY }}
+          port: 22
+          source: "docker-compose.yaml,nginx.conf,app/"
+          target: "/home/${{ secrets.SSH_USERNAME }}/app"
+
+      - name: Execute Remote SSH Commands
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_KEY }}
+          port: 22
+          script: |
+            # Ustawienie zmiennych
+            export CR_PAT=${{ secrets.GHCR_PAT }}
+            export USERNAME=${{ secrets.SSH_USERNAME }}
+            
+            cd /home/$USERNAME/app
+            
+            echo "Logowanie do GHCR..."
+            echo $CR_PAT | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            
+            echo "Pobieranie najnowszych obrazów..."
+            docker-compose pull
+            
+            echo "Restart aplikacji..."
+            docker-compose up -d --remove-orphans
+            
+            echo "Usuwanie starych obrazów..."
+            docker image prune -f
