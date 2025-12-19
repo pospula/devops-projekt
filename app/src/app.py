@@ -41,8 +41,7 @@ def create_app(test_config=None):
             return jsonify(new_user.to_dict()), 201
         except Exception as e:
             db.session.rollback()
-            print(f"Error creating user: {e}") 
-            return jsonify({"error": str(e)}), 500
+            return jsonify("Error creating user"), 500
 
     @app.route('/users', methods=['GET'])
     def get_users():
